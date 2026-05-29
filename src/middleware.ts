@@ -6,6 +6,9 @@ import type { NextRequest } from "next/server";
 const PUBLIC_PATHS = [
   "/login",
   "/api/auth",
+  "/sw.js",
+  "/workbox-",
+  "/swe-worker",
 ];
 
 export default async function middleware(req: NextRequest) {
