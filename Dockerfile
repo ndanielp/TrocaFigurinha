@@ -9,6 +9,10 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+ENV DATABASE_URL=postgresql://dummy:dummy@localhost/dummy
+ENV AUTH_SECRET=build-placeholder
+ENV GOOGLE_CLIENT_ID=build-placeholder
+ENV GOOGLE_CLIENT_SECRET=build-placeholder
 RUN npm run build
 
 FROM node:22-slim AS runner
