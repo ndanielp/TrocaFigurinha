@@ -1,7 +1,7 @@
 type LogLevel = "info" | "warn" | "error";
 
 interface LogEntry {
-  severity: string;
+  severity?: string;
   message: string;
   event?: string;
   userId?: string;
@@ -31,12 +31,6 @@ export const logger = {
   },
   accountDeleted(userId: string) {
     log("info", { message: "account.deleted", event: "gdpr", userId });
-  },
-  parentalConsentSent(userId: string) {
-    log("info", { message: "parental.consent.sent", event: "consent", userId });
-  },
-  parentalConsentConfirmed(userId: string) {
-    log("info", { message: "parental.consent.confirmed", event: "consent", userId });
   },
   rateLimited(ip: string, endpoint: string) {
     log("warn", { message: "rate.limit.exceeded", event: "security", ip, endpoint });
