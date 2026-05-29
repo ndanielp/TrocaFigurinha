@@ -3,7 +3,21 @@ import GoogleProvider from "next-auth/providers/google";
 import PostgresAdapter from "@auth/pg-adapter";
 import { Pool } from "pg";
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+function createPool() {
+  const connStr = process.env.DATABASE_URL!;
+  const url = new URL(connStr);
+  const socketPath = url.searchParams.get("host");
+  return new Pool({
+    user: decodeURIComponent(url.username),
+    password: decodeURIComponent(url.password),
+    database: url.pathname.slice(1),
+    host: socketPath ?? url.hostname,
+    port: socketPath ? undefined : (parseInt(url.port) || 5432),
+    ssl: false,
+  });
+}
+
+const pool = createPool();
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PostgresAdapter(pool),
