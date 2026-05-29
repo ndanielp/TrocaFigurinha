@@ -20,6 +20,7 @@ function createPool() {
 const pool = createPool();
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   adapter: PostgresAdapter(pool),
   session: { strategy: "database", maxAge: 24 * 60 * 60 },
   providers: [
