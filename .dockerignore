@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.gitignore
+*.md
+.env*
+!.env.example
+coverage
+.nyc_output
+infra/seeds
+specs
+.specify
+.claude
+cloud-sql-proxy*
