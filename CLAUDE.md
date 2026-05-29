@@ -1,5 +1,5 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/002-google-only-auth/plan.md
+at specs/003-fix-400-bad-request/plan.md
 <!-- SPECKIT END -->
