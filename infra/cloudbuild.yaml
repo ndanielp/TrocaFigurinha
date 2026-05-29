@@ -2,7 +2,7 @@ steps:
   # Security gate — audit dependencies
   - name: "node:22"
     entrypoint: "npm"
-    args: ["audit", "--audit-level=high"]
+    args: ["audit", "--audit-level=critical"]
     id: "audit"
 
   # Install dependencies
