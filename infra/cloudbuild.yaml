@@ -26,6 +26,10 @@ steps:
     id: "build"
     env:
       - "NODE_ENV=production"
+      - "DATABASE_URL=postgresql://dummy:dummy@localhost/dummy"
+      - "AUTH_SECRET=build-placeholder"
+      - "GOOGLE_CLIENT_ID=build-placeholder"
+      - "GOOGLE_CLIENT_SECRET=build-placeholder"
     waitFor: ["lint"]
 
   # Deploy to Cloud Run (Buildpacks — no local Docker needed)
