@@ -1,3 +1,4 @@
+export const runtime = 'nodejs';
 import { auth } from "@/lib/auth/config";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
