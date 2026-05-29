@@ -46,8 +46,8 @@ steps:
       - "--platform"
       - "managed"
       - "--allow-unauthenticated"
-      - "--set-env-vars"
-      - "NODE_ENV=production"
+      - "--update-env-vars"
+      - "NODE_ENV=production,AUTH_URL=$_AUTH_URL,NEXTAUTH_URL=$_AUTH_URL"
       - "--set-secrets"
       - "DATABASE_URL=DATABASE_URL:latest,AUTH_SECRET=AUTH_SECRET:latest,GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest,GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest"
     id: "deploy"
@@ -56,6 +56,7 @@ steps:
 substitutions:
   _SERVICE_NAME: trocafigurinhas-staging
   _REGION: southamerica-east1
+  _AUTH_URL: https://trocafigurinhas-staging-203084513594.southamerica-east1.run.app
 
 options:
   logging: CLOUD_LOGGING_ONLY
