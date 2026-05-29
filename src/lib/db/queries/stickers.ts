@@ -1,5 +1,5 @@
 import { sql } from "@/lib/db/client";
-import type { StickerWithStatus, AlbumSection, SectionType } from "@/types";
+import type { StickerWithStatus, AlbumSection } from "@/types";
 
 export async function getUserAlbum(userId: string): Promise<AlbumSection[]> {
   const rows = await sql<StickerWithStatus[]>`

@@ -72,7 +72,6 @@ export default function AlbumPage() {
     []
   );
 
-  const totalOwned = sections.flatMap((s) => s.stickers).filter((s) => s.status !== "needs").length;
   const totalOfficial = sections.flatMap((s) => s.stickers).filter((s) => s.isOfficialAlbum).length;
   const ownedOfficial = sections
     .flatMap((s) => s.stickers)
