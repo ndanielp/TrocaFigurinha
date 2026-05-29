@@ -1,7 +1,6 @@
 export const runtime = 'nodejs';
 import { auth } from "@/lib/auth/config";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
 const PUBLIC_PATHS = [
   "/login",
@@ -11,7 +10,7 @@ const PUBLIC_PATHS = [
   "/swe-worker",
 ];
 
-export default async function middleware(req: NextRequest) {
+export default auth(function middleware(req) {
   const { pathname } = req.nextUrl;
 
   const isPublic =
@@ -23,7 +22,7 @@ export default async function middleware(req: NextRequest) {
 
   if (isPublic) return NextResponse.next();
 
-  const session = await auth();
+  const session = req.auth;
 
   if (!session?.user) {
     const loginUrl = new URL("/login", req.url);
@@ -36,7 +35,7 @@ export default async function middleware(req: NextRequest) {
   }
 
   return NextResponse.next();
-}
+});
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
