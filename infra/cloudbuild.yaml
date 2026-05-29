@@ -1,0 +1,57 @@
+steps:
+  # Security gate — audit dependencies
+  - name: "node:22"
+    entrypoint: "npm"
+    args: ["audit", "--audit-level=high"]
+    id: "audit"
+
+  # Install dependencies
+  - name: "node:22"
+    entrypoint: "npm"
+    args: ["ci"]
+    id: "install"
+    waitFor: ["audit"]
+
+  # Type check
+  - name: "node:22"
+    entrypoint: "npm"
+    args: ["run", "lint"]
+    id: "lint"
+    waitFor: ["install"]
+
+  # Build
+  - name: "node:22"
+    entrypoint: "npm"
+    args: ["run", "build"]
+    id: "build"
+    env:
+      - "NODE_ENV=production"
+    waitFor: ["lint"]
+
+  # Deploy to Cloud Run (Buildpacks — no local Docker needed)
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: "gcloud"
+    args:
+      - "run"
+      - "deploy"
+      - "$_SERVICE_NAME"
+      - "--source"
+      - "."
+      - "--region"
+      - "$_REGION"
+      - "--platform"
+      - "managed"
+      - "--allow-unauthenticated"
+      - "--set-env-vars"
+      - "NODE_ENV=production"
+      - "--set-secrets"
+      - "DATABASE_URL=DATABASE_URL:latest,AUTH_SECRET=AUTH_SECRET:latest,GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest,GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest"
+    id: "deploy"
+    waitFor: ["build"]
+
+substitutions:
+  _SERVICE_NAME: trocafigurinhas-staging
+  _REGION: southamerica-east1
+
+options:
+  logging: CLOUD_LOGGING_ONLY

@@ -1,0 +1,38 @@
+{
+  "name": "trocafigurinhas",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:migrate": "node-pg-migrate up -m infra/migrations --database-url-env DATABASE_URL",
+    "db:seed": "node scripts/seed.mjs",
+    "db:reset": "node scripts/db-reset.mjs"
+  },
+  "dependencies": {
+    "@auth/pg-adapter": "^1.11.2",
+    "@ducanh2912/next-pwa": "^10.2.9",
+    "pg": "^8.13.3",
+    "next": "^15.3.2",
+    "next-auth": "^5.0.0-beta.29",
+    "node-pg-migrate": "^7.9.1",
+    "postgres": "^3.4.5",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.11",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^15.3.2",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.8.3"
+  }
+}
