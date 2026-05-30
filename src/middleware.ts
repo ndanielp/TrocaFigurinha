@@ -1,6 +1,5 @@
-export const runtime = 'nodejs';
-import { auth } from "@/lib/auth/config";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 const PUBLIC_PATHS = [
   "/login",
@@ -10,7 +9,7 @@ const PUBLIC_PATHS = [
   "/swe-worker",
 ];
 
-export default auth(function middleware(req) {
+export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   const isPublic =
@@ -22,20 +21,20 @@ export default auth(function middleware(req) {
 
   if (isPublic) return NextResponse.next();
 
-  const session = req.auth;
+  // Optimistic cookie check — no DB call in middleware.
+  // NextAuth v5 uses different cookie names depending on environment.
+  const hasSession =
+    req.cookies.has("authjs.session-token") ||
+    req.cookies.has("__Secure-authjs.session-token");
 
-  if (!session?.user) {
+  if (!hasSession) {
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  if (session.user.accountStatus === "incomplete_onboarding" && !pathname.startsWith("/onboarding")) {
-    return NextResponse.redirect(new URL("/onboarding", req.url));
-  }
-
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
