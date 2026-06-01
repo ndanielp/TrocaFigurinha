@@ -1,6 +1,37 @@
 import { sql } from "@/lib/db/client";
 import type { Match, MatchDetail, MatchFilters, PaginatedMatches } from "@/types";
 
+// Conta parceiros que tem duplicatas que o usuario precisa, mas sem reciprocidade (eu_dou=0).
+// Retorna so a contagem — sem dados identificaveis do parceiro.
+export async function getAnonymousMatchCount(userId: string): Promise<number> {
+  const rows = await sql<{ count: number }[]>`
+    SELECT COUNT(DISTINCT b.id)::int AS count
+    FROM users b
+    JOIN LATERAL (
+      SELECT COUNT(*)::int AS cnt
+      FROM user_stickers ub
+      LEFT JOIN user_stickers ua ON ub.sticker_id = ua.sticker_id AND ua.user_id = ${userId}
+      WHERE ub.user_id = b.id
+        AND ub.status = 'duplicate'
+        AND (ua.status = 'needs' OR ua.status IS NULL)
+    ) eu_recebo ON TRUE
+    JOIN LATERAL (
+      SELECT COUNT(*)::int AS cnt
+      FROM user_stickers ua
+      LEFT JOIN user_stickers ub ON ua.sticker_id = ub.sticker_id AND ub.user_id = b.id
+      WHERE ua.user_id = ${userId}
+        AND ua.status = 'duplicate'
+        AND (ub.status = 'needs' OR ub.status IS NULL)
+    ) eu_dou ON TRUE
+    WHERE b.id != ${userId}
+      AND b.account_status = 'active'
+      AND b.deleted_at IS NULL
+      AND eu_recebo.cnt >= 1
+      AND eu_dou.cnt = 0
+  `;
+  return rows[0]?.count ?? 0;
+}
+
 export async function getMatches(userId: string, filters: MatchFilters = {}): Promise<PaginatedMatches> {
   const { maxDistanceKm = null, minScore = 1, page = 1, perPage = 20 } = filters;
   const offset = (page - 1) * perPage;
@@ -13,12 +44,12 @@ export async function getMatches(userId: string, filters: MatchFilters = {}): Pr
     eu_dou: number;
     eu_recebo: number;
     score: number;
-    distance_km: number;
+    distance_km: number | null;
   }[]>`
     SELECT
       b.id               AS partner_id,
-      b.display_name     AS partner_name,
-      b.avatar_url       AS partner_avatar_url,
+      b.name             AS partner_name,
+      b.image            AS partner_avatar_url,
       b.whatsapp_opt_in  AS partner_whatsapp_opt_in,
       eu_dou.cnt         AS eu_dou,
       eu_recebo.cnt      AS eu_recebo,
@@ -47,8 +78,8 @@ export async function getMatches(userId: string, filters: MatchFilters = {}): Pr
         AND (ua.status = 'needs' OR ua.status IS NULL)
     ) eu_recebo ON TRUE
     JOIN users a ON a.id = ${userId}
-    JOIN cep_centroids ca ON LEFT(a.cep, 5) = ca.cep_prefix
-    JOIN cep_centroids cb ON LEFT(b.cep, 5) = cb.cep_prefix
+    LEFT JOIN cep_centroids ca ON LEFT(a.cep, 5) = ca.cep_prefix
+    LEFT JOIN cep_centroids cb ON LEFT(b.cep, 5) = cb.cep_prefix
     WHERE b.id != ${userId}
       AND b.account_status = 'active'
       AND b.deleted_at IS NULL
@@ -84,8 +115,8 @@ export async function getMatches(userId: string, filters: MatchFilters = {}): Pr
         AND (ua.status = 'needs' OR ua.status IS NULL)
     ) eu_recebo ON TRUE
     JOIN users a ON a.id = ${userId}
-    JOIN cep_centroids ca ON LEFT(a.cep, 5) = ca.cep_prefix
-    JOIN cep_centroids cb ON LEFT(b.cep, 5) = cb.cep_prefix
+    LEFT JOIN cep_centroids ca ON LEFT(a.cep, 5) = ca.cep_prefix
+    LEFT JOIN cep_centroids cb ON LEFT(b.cep, 5) = cb.cep_prefix
     WHERE b.id != ${userId}
       AND b.account_status = 'active'
       AND b.deleted_at IS NULL
@@ -117,8 +148,11 @@ export async function getMatches(userId: string, filters: MatchFilters = {}): Pr
     previewReceive: [],
   }));
 
+  const anonymousCount = await getAnonymousMatchCount(userId);
+
   return {
     matches,
+    anonymousCount,
     total: countResult[0]?.total ?? 0,
     page,
     perPage,
@@ -127,13 +161,13 @@ export async function getMatches(userId: string, filters: MatchFilters = {}): Pr
 
 export async function getMatchDetail(userId: string, partnerId: string): Promise<MatchDetail | null> {
   const partnerRow = await sql<{
-    display_name: string;
-    avatar_url: string | null;
+    name: string;
+    image: string | null;
     whatsapp: string | null;
     whatsapp_opt_in: boolean;
     cep: string;
   }[]>`
-    SELECT display_name, avatar_url, whatsapp, whatsapp_opt_in, cep
+    SELECT name, image, whatsapp, whatsapp_opt_in, cep
     FROM users WHERE id = ${partnerId} AND account_status = 'active' AND deleted_at IS NULL
   `;
 
@@ -181,10 +215,10 @@ export async function getMatchDetail(userId: string, partnerId: string): Promise
 
   return {
     partnerId,
-    partnerName: partner.display_name,
-    partnerAvatarUrl: partner.avatar_url,
+    partnerName: partner.name,
+    partnerAvatarUrl: partner.image,
     score,
-    distanceKm: distanceResult[0]?.distance_km ?? 0,
+    distanceKm: distanceResult[0]?.distance_km ?? null,
     euDou: euDou.map((s) => ({ id: s.id, naturalKey: s.natural_key, stickerName: s.sticker_name, teamSlug: s.team_slug, positionInSection: s.position_in_section })),
     euRecebo: euRecebo.map((s) => ({ id: s.id, naturalKey: s.natural_key, stickerName: s.sticker_name, teamSlug: s.team_slug, positionInSection: s.position_in_section })),
     whatsappAvailable,

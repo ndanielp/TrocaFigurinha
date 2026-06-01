@@ -2,10 +2,11 @@
 import type { AlbumSection } from "@/types";
 import { StickerCard } from "./StickerCard";
 import { Button } from "@/components/ui/Button";
+import { getTeamName } from "@/lib/teams";
 
 interface TeamSectionProps {
   section: AlbumSection;
-  onStickerChange: (stickerId: number, status: "needs" | "owned" | "duplicate") => void;
+  onStickerChange: (stickerId: number, status: "needs" | "owned" | "duplicate", duplicateCount: number) => void;
   onBulkChange: (teamSlug: string, status: "needs" | "owned" | "duplicate") => void;
   loadingIds: Set<number>;
 }
@@ -19,7 +20,13 @@ export function TeamSection({ section, onStickerChange, onBulkChange, loadingIds
       <div className="mb-3 flex items-center justify-between">
         <div>
           <h3 className="font-semibold text-gray-900">
-            {section.teamSlug ?? section.sectionType}
+            {section.sectionType === 'tournament_special'
+              ? (section.stickers[0]?.positionRole === 'history'
+                  ? 'Copa do Mundo 2026 — História'
+                  : 'Copa do Mundo 2026 — Abertura')
+              : section.sectionType === 'promotional'
+                ? 'Coca-Cola'
+                : `${section.groupCode ? `Grupo ${section.groupCode} — ` : ""}${getTeamName(section.teamSlug)}`}
           </h3>
           <p className="text-xs text-gray-400">{owned}/{total} figurinhas</p>
         </div>

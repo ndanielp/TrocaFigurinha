@@ -13,13 +13,18 @@ export async function getUserAlbum(userId: string): Promise<AlbumSection[]> {
       COALESCE(us.duplicate_count, 0) AS "duplicateCount"
     FROM stickers s
     LEFT JOIN user_stickers us ON s.id = us.sticker_id AND us.user_id = ${userId}
-    ORDER BY s.section_type, s.group_code, s.team_slug, s.position_in_section
+    ORDER BY s.section_order, s.position_in_section
   `;
 
   const sectionMap = new Map<string, AlbumSection>();
 
   for (const row of rows) {
-    const key = `${row.sectionType}__${row.groupCode ?? ""}__${row.teamSlug ?? ""}`;
+    // tournament_special tem dois blocos distintos no album fisico: intro (pagina 1)
+    // e historia (pagina 98). Diferenciar pelo positionRole para nao agrupá-los.
+    const subtype = row.sectionType === 'tournament_special'
+      ? (row.positionRole === 'history' ? 'history' : 'intro')
+      : '';
+    const key = `${row.sectionType}__${row.groupCode ?? ""}__${row.teamSlug ?? ""}__${subtype}`;
     if (!sectionMap.has(key)) {
       sectionMap.set(key, {
         sectionType: row.sectionType,

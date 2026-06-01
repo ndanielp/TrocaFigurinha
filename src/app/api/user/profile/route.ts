@@ -15,6 +15,7 @@ const onboardingSchema = z.object({
   cep: z.string().regex(/^\d{8}$/),
   whatsapp: z.string().optional(),
   whatsappOptIn: z.boolean(),
+  displayName: z.string().min(1).max(50).optional(),
 });
 
 export async function GET() {

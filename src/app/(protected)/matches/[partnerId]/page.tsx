@@ -31,7 +31,9 @@ export default function MatchDetailPage() {
       <div className="border-b bg-white px-4 py-3">
         <Link href="/matches" className="text-sm text-blue-600">← Voltar</Link>
         <h1 className="mt-1 text-lg font-bold text-gray-900">{detail.partnerName}</h1>
-        <p className="text-sm text-gray-500">{detail.distanceKm} km • Score {detail.score}</p>
+        <p className="text-sm text-gray-500">
+          {detail.distanceKm != null ? `${detail.distanceKm} km` : "Distância indisponível"} • Score {detail.score}
+        </p>
       </div>
 
       <div className="mx-auto max-w-2xl space-y-4 p-4">

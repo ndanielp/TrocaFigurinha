@@ -22,7 +22,7 @@ export type ReleaseBatch = "original" | "coca_cola" | "update_team";
 export interface User {
   id: string;
   email: string;
-  emailVerified: boolean;
+  emailVerified: Date | null;
   displayName: string;
   cep: string;
   whatsapp: string | null;
@@ -71,7 +71,7 @@ export interface Match {
   partnerName: string;
   partnerAvatarUrl: string | null;
   score: number;
-  distanceKm: number;
+  distanceKm: number | null;
   euDou: number;
   euRecebo: number;
   whatsappAvailable: boolean;
@@ -79,12 +79,17 @@ export interface Match {
   previewReceive: Pick<Sticker, "id" | "naturalKey" | "stickerName" | "teamSlug">[];
 }
 
+export interface AnonymousMatch {
+  anonymous: true;
+  euRecebo: number;
+}
+
 export interface MatchDetail {
   partnerId: string;
   partnerName: string;
   partnerAvatarUrl: string | null;
   score: number;
-  distanceKm: number;
+  distanceKm: number | null;
   euDou: (Pick<Sticker, "id" | "naturalKey" | "stickerName" | "teamSlug" | "positionInSection">)[];
   euRecebo: (Pick<Sticker, "id" | "naturalKey" | "stickerName" | "teamSlug" | "positionInSection">)[];
   whatsappAvailable: boolean;
@@ -105,6 +110,7 @@ export interface UserStats {
 
 export interface PaginatedMatches {
   matches: Match[];
+  anonymousCount: number;
   total: number;
   page: number;
   perPage: number;

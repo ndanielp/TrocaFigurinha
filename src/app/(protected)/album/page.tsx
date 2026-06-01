@@ -17,16 +17,14 @@ export default function AlbumPage() {
   }, []);
 
   const handleStickerChange = useCallback(
-    async (stickerId: number, status: "needs" | "owned" | "duplicate") => {
+    async (stickerId: number, status: "needs" | "owned" | "duplicate", duplicateCount: number) => {
       setLoadingIds((prev) => new Set(prev).add(stickerId));
 
       setSections((prev) =>
         prev.map((section) => ({
           ...section,
           stickers: section.stickers.map((s) =>
-            s.id === stickerId
-              ? { ...s, status, duplicateCount: status === "duplicate" ? Math.max(s.duplicateCount, 1) : 0 }
-              : s
+            s.id === stickerId ? { ...s, status, duplicateCount } : s
           ),
         }))
       );
@@ -34,7 +32,7 @@ export default function AlbumPage() {
       await fetch("/api/collection/sticker", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stickerId, status }),
+        body: JSON.stringify({ stickerId, status, ...(duplicateCount > 0 && { duplicateCount }) }),
       });
 
       setLoadingIds((prev) => {

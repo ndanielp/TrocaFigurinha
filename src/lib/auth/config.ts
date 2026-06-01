@@ -42,38 +42,44 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         session.user.id = user.id;
         const result = await pool.query(
-          `SELECT account_status, avatar_url FROM users WHERE id = $1 AND deleted_at IS NULL`,
+          `SELECT account_status, image FROM users WHERE id = $1 AND deleted_at IS NULL`,
           [user.id]
         );
         const dbUser = result.rows[0];
         if (dbUser) {
           session.user.accountStatus = dbUser.account_status;
-          session.user.image = dbUser.avatar_url;
+          session.user.image = dbUser.image;
         }
       }
       return session;
     },
     async signIn({ account, profile }) {
-      if (account?.provider === "google" && profile) {
-        const existing = await pool.query(
-          `SELECT id, account_status FROM users WHERE email = $1 AND deleted_at IS NULL`,
+      // O adapter cria usuario e vincula conta Google.
+      // Aqui bloqueamos contas suspensas e usuarios soft-deletados.
+      if (account?.provider === "google" && profile?.email) {
+        // Usuarios retornantes: verificar via accounts table pelo providerAccountId.
+        // Isso detecta soft-delete mesmo apos mudanca de email na tabela users.
+        if (account.providerAccountId) {
+          const linked = await pool.query(
+            `SELECT u.account_status, u.deleted_at
+             FROM users u
+             JOIN accounts a ON u.id = a."userId"
+             WHERE a.provider = $1 AND a."providerAccountId" = $2`,
+            [account.provider, account.providerAccountId]
+          );
+          if (linked.rows[0]) {
+            if (linked.rows[0].deleted_at) return false;
+            if (linked.rows[0].account_status === "suspended") return false;
+            return true;
+          }
+        }
+        // Usuarios novos (sem vinculo em accounts ainda): verificar por email.
+        const byEmail = await pool.query(
+          `SELECT account_status, deleted_at FROM users WHERE email = $1`,
           [profile.email]
         );
-        if (existing.rows.length === 0) {
-          await pool.query(
-            `INSERT INTO users (email, email_verified, google_id, display_name, cep, avatar_url, account_status)
-             VALUES ($1, true, $2, $3, '', $4, 'incomplete_onboarding')
-             ON CONFLICT (email) DO UPDATE SET google_id = $2, avatar_url = $4, email_verified = true`,
-            [profile.email, profile.sub, profile.name, profile.picture]
-          );
-        } else if (existing.rows[0].account_status === "suspended") {
-          return false;
-        } else {
-          await pool.query(
-            `UPDATE users SET avatar_url = $1 WHERE email = $2`,
-            [profile.picture, profile.email]
-          );
-        }
+        if (byEmail.rows[0]?.deleted_at) return false;
+        if (byEmail.rows[0]?.account_status === "suspended") return false;
       }
       return true;
     },

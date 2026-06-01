@@ -14,5 +14,10 @@ export async function GET(
   const detail = await getMatchDetail(session.user.id, partnerId);
   if (!detail) return NextResponse.json({ error: "Match não encontrado." }, { status: 404 });
 
+  // Recusar acesso a detalhes quando nao ha reciprocidade (eu_dou=0).
+  if (detail.euDou.length === 0) {
+    return NextResponse.json({ error: "Match não encontrado." }, { status: 404 });
+  }
+
   return NextResponse.json(detail);
 }

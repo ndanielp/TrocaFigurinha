@@ -20,7 +20,9 @@ function LoginContent() {
 
       {error && (
         <p className="mb-6 rounded-lg bg-red-50 p-3 text-sm text-red-600">
-          {error === "OAuthSignin" || error === "OAuthCallback"
+          {error === "AccessDenied"
+            ? "Esta conta não está disponível. Ela pode ter sido excluída ou suspensa."
+            : error === "OAuthSignin" || error === "OAuthCallback"
             ? "Erro ao entrar com Google. Tente novamente."
             : "Ocorreu um erro. Tente novamente."}
         </p>

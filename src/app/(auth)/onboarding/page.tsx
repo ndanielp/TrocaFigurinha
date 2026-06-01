@@ -1,14 +1,33 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ cep: "", whatsapp: "", whatsappOptIn: false });
+  const [form, setForm] = useState({
+    displayName: "",
+    cep: "",
+    whatsapp: "",
+    whatsappOptIn: false,
+  });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Pré-preencher o nome com o que veio da conta Google (via perfil do usuário).
+  useEffect(() => {
+    fetch("/api/user/profile")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((u) => {
+        if (u?.displayName) {
+          setForm((prev) => ({ ...prev, displayName: prev.displayName || u.displayName }));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const displayName = form.displayName;
 
   function update(field: string, value: string | boolean) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -30,6 +49,7 @@ export default function OnboardingPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         _action: "complete_onboarding",
+        displayName: displayName.trim() || undefined,
         cep: cepDigits,
         whatsapp: form.whatsapp || undefined,
         whatsappOptIn: form.whatsappOptIn,
@@ -55,6 +75,13 @@ export default function OnboardingPage() {
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <Input
+            id="displayName"
+            label="Por qual nome gostaria de ser chamado?"
+            placeholder="Seu nome"
+            value={displayName}
+            onChange={(e) => update("displayName", e.target.value)}
+          />
           <Input
             id="cep"
             label="CEP"

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import type { Match, PaginatedMatches } from "@/types";
+import type { PaginatedMatches, Match } from "@/types";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -45,15 +45,42 @@ export default function MatchesPage() {
       <div className="mx-auto max-w-2xl space-y-3 p-4">
         {loading ? (
           <div className="flex justify-center py-10"><Spinner size="lg" /></div>
-        ) : data?.matches.length === 0 ? (
+        ) : data?.matches.length === 0 && !data?.anonymousCount ? (
           <p className="py-10 text-center text-gray-400">
             Nenhum match encontrado. Adicione mais figurinhas repetidas ao seu álbum!
           </p>
         ) : (
-          data?.matches.map((match) => <MatchCard key={match.partnerId} match={match} />)
+          <>
+            {data?.matches.map((match) => <MatchCard key={match.partnerId} match={match} />)}
+            {(data?.anonymousCount ?? 0) > 0 && (
+              <AnonymousMatchCard count={data!.anonymousCount} />
+            )}
+          </>
         )}
       </div>
     </div>
+  );
+}
+
+function AnonymousMatchCard({ count }: { count: number }) {
+  return (
+    <Card className="border-dashed border-amber-300 bg-amber-50">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-500 text-lg">
+          🔒
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-amber-800">
+            {count === 1
+              ? "Alguém próximo tem figurinhas que você precisa"
+              : `${count} pessoas próximas têm figurinhas que você precisa`}
+          </p>
+          <p className="mt-1 text-sm text-amber-700">
+            Inclua suas figurinhas repetidas para ver quem são e propor a troca.
+          </p>
+        </div>
+      </div>
+    </Card>
   );
 }
 
@@ -75,7 +102,9 @@ function MatchCard({ match }: { match: Match }) {
               <Badge variant="success">WhatsApp</Badge>
             )}
           </div>
-          <p className="text-xs text-gray-500">{match.distanceKm} km de distância</p>
+          <p className="text-xs text-gray-500">
+            {match.distanceKm != null ? `${match.distanceKm} km de distância` : "Distância indisponível"}
+          </p>
           <div className="mt-2 flex gap-3 text-sm">
             <span className="text-green-600">↑ {match.euDou} para dar</span>
             <span className="text-blue-600">↓ {match.euRecebo} para receber</span>
