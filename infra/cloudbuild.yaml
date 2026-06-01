@@ -1,0 +1,62 @@
+steps:
+  # Security gate — audit dependencies
+  - name: "node:22"
+    entrypoint: "npm"
+    args: ["audit", "--audit-level=critical"]
+    id: "audit"
+
+  # Install dependencies
+  - name: "node:22"
+    entrypoint: "npm"
+    args: ["install"]
+    id: "install"
+    waitFor: ["audit"]
+
+  # Type check
+  - name: "node:22"
+    entrypoint: "npm"
+    args: ["run", "lint"]
+    id: "lint"
+    waitFor: ["install"]
+
+  # Build
+  - name: "node:22"
+    entrypoint: "npm"
+    args: ["run", "build"]
+    id: "build"
+    env:
+      - "NODE_ENV=production"
+      - "DATABASE_URL=postgresql://dummy:dummy@localhost/dummy"
+      - "AUTH_SECRET=build-placeholder"
+      - "GOOGLE_CLIENT_ID=build-placeholder"
+      - "GOOGLE_CLIENT_SECRET=build-placeholder"
+    waitFor: ["lint"]
+
+  # Deploy to Cloud Run (Buildpacks — no local Docker needed)
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: "gcloud"
+    args:
+      - "run"
+      - "deploy"
+      - "$_SERVICE_NAME"
+      - "--source"
+      - "."
+      - "--region"
+      - "$_REGION"
+      - "--platform"
+      - "managed"
+      - "--allow-unauthenticated"
+      - "--update-env-vars"
+      - "NODE_ENV=production,AUTH_URL=$_AUTH_URL,NEXTAUTH_URL=$_AUTH_URL"
+      - "--set-secrets"
+      - "DATABASE_URL=DATABASE_URL:latest,AUTH_SECRET=AUTH_SECRET:latest,GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest,GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest"
+    id: "deploy"
+    waitFor: ["build"]
+
+substitutions:
+  _SERVICE_NAME: trocafigurinhas-staging
+  _REGION: southamerica-east1
+  _AUTH_URL: https://trocafigurinhas-staging-203084513594.southamerica-east1.run.app
+
+options:
+  logging: CLOUD_LOGGING_ONLY
